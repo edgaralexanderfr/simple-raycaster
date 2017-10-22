@@ -1,0 +1,141 @@
+<canvas width="800" height="480"></canvas>
+<script type="text/javascript">
+	function render () {
+		var cs              = Math.round(canvas.width / Math.max(columns, 1));
+		var c, cameraX, dx, dy, mapX, mapY, deltaDistX, deltaDistY, stepX, stepY, sideDistX, sideDistY, side, distance, height, tex, wallX, texX;
+		context.globalAlpha = 1.0;
+		context.fillStyle   = 'black';
+		context.fillRect(0, 0, canvas.width, canvas.height);
+
+		for (c = 0; c < canvas.width; c += cs) {
+			cameraX    = 2 * c / canvas.width - 1;
+			dx         = Math.cos(a) + planeX * cameraX;
+			dy         = Math.sin(a) + planeY * cameraX;
+			mapX       = Math.floor(x);
+			mapY       = Math.floor(y);
+			deltaDistX = Math.sqrt(1 + (dy * dy) / (dx * dx));
+			deltaDistY = Math.sqrt(1 + (dx * dx) / (dy * dy));
+
+			if (dx < 0.0) {
+				stepX     = -1;
+				sideDistX = (x - mapX) * deltaDistX;
+			} else {
+				stepX     = 1;
+				sideDistX = (mapX + 1.0 - x) * deltaDistX;
+			}
+
+			if (dy < 0.0) {
+				stepY     = -1;
+				sideDistY = (y - mapY) * deltaDistY;
+			} else {
+				stepY     = 1;
+				sideDistY = (mapY + 1.0 - y) * deltaDistY;
+			}
+
+			while (true) {
+				if (sideDistX < sideDistY) {
+					sideDistX += deltaDistX;
+					mapX      += stepX;
+					side       = 0;
+				} else {
+					sideDistY += deltaDistY;
+					mapY      += stepY;
+					side       = 1;
+				}
+
+				if (map[ mapY ] != undefined && map[ mapY ][ mapX ] != undefined && map[ mapY ][ mapX ] > 0) {
+					break;
+				}
+			}
+			
+			distance = (side == 0) ? (mapX - x + (1 - stepX) / 2) / dx : (mapY - y + (1 - stepY) / 2) / dy ;
+			height   = Math.floor(wallsHeight * canvas.height / distance);
+			tex      = textures[ map[ mapY ][ mapX ] - 1 ];
+			wallX    = (side == 0) ? y + distance * dy : x + distance * dx ;
+			wallX   -= Math.floor(wallX);
+			texX     = Math.floor(wallX * tex.width);
+
+			if ((side == 0 && dx > 0) || (side == 1 && dy < 0)) {
+				texX = tex.width - texX - 1;
+			}
+
+			if (fadeDistance > 0.0) {
+				context.globalAlpha = 1.0 - (Math.min(distance, fadeDistance) / fadeDistance);
+			}
+
+			context.drawImage(tex, Math.floor(texX), 0, cs, tex.height, c, Math.floor(z + (canvas.height - height) / 2), cs, height);
+		}
+
+		if (fps > 0) {
+			setTimeout(render, 1000 / fps);
+		} else {
+			requestAnimationFrame(render);
+		}
+	}
+
+	onkeyup = function (e) {
+		var oldPlaneX;
+
+		switch (String.fromCharCode(e.which).toLowerCase()) {
+			case 'w' : {
+				x += Math.cos(a) * s;
+				y += Math.sin(a) * s;
+			} ; break;
+			case 's' : {
+				x += Math.cos(a + Math.PI) * s;
+				y += Math.sin(a + Math.PI) * s;
+			} ; break;
+			case 'a' : {
+				a        -= ts;
+				oldPlaneX = planeX;
+				planeX    = planeX    * Math.cos(-ts) - planeY * Math.sin(-ts);
+				planeY    = oldPlaneX * Math.sin(-ts) + planeY * Math.cos(-ts);
+			} ; break;
+			case 'd' : {
+				a        += ts;
+				oldPlaneX = planeX;
+				planeX    = planeX    * Math.cos(ts) - planeY * Math.sin(ts);
+				planeY    = oldPlaneX * Math.sin(ts) + planeY * Math.cos(ts);
+			} ; break;
+			case 'i' : {
+				z += zs;
+			} ; break;
+			case 'k' : {
+				z -= zs;
+			}
+		}
+	}
+
+	var textures    = [];
+	var wallsHeight = 1.5;
+	var map         = [
+		[1,1,1,1,1,1,1,1,1,1], 
+		[1,0,0,0,0,0,0,0,0,1], 
+		[1,0,1,1,0,0,1,1,0,1], 
+		[1,0,1,1,0,0,1,1,0,1], 
+		[1,0,0,0,0,0,0,0,0,1], 
+		[1,0,0,0,0,0,0,0,0,1], 
+		[1,0,1,1,0,0,1,1,0,1], 
+		[1,0,1,1,0,0,1,1,0,1], 
+		[1,0,0,0,0,0,0,0,0,1], 
+		[1,1,1,1,1,1,1,1,1,1], 
+	];
+	var canvas       = document.querySelector('canvas');
+	var context      = canvas.getContext('2d');
+	var fps          = 5;
+	var x            = 5.0;
+	var y            = 5.0;
+	var z            = 0.0;
+	var a            = 0.0;
+	var planeX       = 0.0;
+	var planeY       = 0.66;
+	var columns      = Math.round(canvas.width / 1);
+	var fadeDistance = 4.0;
+	var s            = 0.2;
+	var zs           = 50;
+	var ts           = 0.2;
+	var texture      = new Image;
+	texture.src      = 'texture.png';
+	textures.push(texture);
+	render();
+</script>
