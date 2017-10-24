@@ -1,6 +1,39 @@
 <canvas width="800" height="480"></canvas>
 <script type="text/javascript">
 	function render () {
+		// Calculate deltaTime
+		var currentFrameTime = Date.now();
+		var deltaTime = (lastFrameTime == 0) ? 0.0 : (currentFrameTime - lastFrameTime) / 1000 ;
+		lastFrameTime = currentFrameTime;
+
+		// We interpolate camera view
+		var oldPlaneX;
+		
+		if (movingUp) {
+			x += Math.cos(a) * s * deltaTime;
+			y += Math.sin(a) * s * deltaTime;
+		}
+
+		if (movingDown) {
+			x += Math.cos(a + Math.PI) * s * deltaTime;
+			y += Math.sin(a + Math.PI) * s * deltaTime;
+		}
+
+		if (lookingLeft) {
+			a        -= ts * deltaTime;
+			oldPlaneX = planeX;
+			planeX    = planeX    * Math.cos(-ts * deltaTime) - planeY * Math.sin(-ts * deltaTime);
+			planeY    = oldPlaneX * Math.sin(-ts * deltaTime) + planeY * Math.cos(-ts * deltaTime);
+		}
+
+		if (lookingRight) {
+			a        += ts * deltaTime;
+			oldPlaneX = planeX;
+			planeX    = planeX    * Math.cos(ts * deltaTime) - planeY * Math.sin(ts * deltaTime);
+			planeY    = oldPlaneX * Math.sin(ts * deltaTime) + planeY * Math.cos(ts * deltaTime);
+		}
+
+		// We begin raytracing
 		var cs              = Math.round(canvas.width / Math.max(columns, 1));
 		var c, cameraX, dx, dy, mapX, mapY, deltaDistX, deltaDistY, stepX, stepY, sideDistX, sideDistY, side, distance, height, tex, wallX, texX;
 		context.globalAlpha = 1.0;
@@ -73,29 +106,36 @@
 		}
 	}
 
-	onkeyup = function (e) {
-		var oldPlaneX;
-
+	onkeydown = function (e) {
 		switch (String.fromCharCode(e.which).toLowerCase()) {
 			case 'w' : {
-				x += Math.cos(a) * s;
-				y += Math.sin(a) * s;
+				movingUp = true;
 			} ; break;
 			case 's' : {
-				x += Math.cos(a + Math.PI) * s;
-				y += Math.sin(a + Math.PI) * s;
+				movingDown = true;
 			} ; break;
 			case 'a' : {
-				a        -= ts;
-				oldPlaneX = planeX;
-				planeX    = planeX    * Math.cos(-ts) - planeY * Math.sin(-ts);
-				planeY    = oldPlaneX * Math.sin(-ts) + planeY * Math.cos(-ts);
+				lookingLeft = true;
 			} ; break;
 			case 'd' : {
-				a        += ts;
-				oldPlaneX = planeX;
-				planeX    = planeX    * Math.cos(ts) - planeY * Math.sin(ts);
-				planeY    = oldPlaneX * Math.sin(ts) + planeY * Math.cos(ts);
+				lookingRight = true;
+			}
+		}
+	}
+
+	onkeyup = function (e) {
+		switch (String.fromCharCode(e.which).toLowerCase()) {
+			case 'w' : {
+				movingUp = false;
+			} ; break;
+			case 's' : {
+				movingDown = false;
+			} ; break;
+			case 'a' : {
+				lookingLeft = false;
+			} ; break;
+			case 'd' : {
+				lookingRight = false;
 			} ; break;
 			case 'i' : {
 				z += zs;
@@ -120,22 +160,27 @@
 		[1,0,0,0,0,0,0,0,0,1], 
 		[1,1,1,1,1,1,1,1,1,1], 
 	];
-	var canvas       = document.querySelector('canvas');
-	var context      = canvas.getContext('2d');
-	var fps          = 5;
-	var x            = 5.0;
-	var y            = 5.0;
-	var z            = 0.0;
-	var a            = 0.0;
-	var planeX       = 0.0;
-	var planeY       = 0.66;
-	var columns      = Math.round(canvas.width / 1);
-	var fadeDistance = 4.0;
-	var s            = 0.2;
-	var zs           = 50;
-	var ts           = 0.2;
-	var texture      = new Image;
-	texture.src      = 'texture.png';
+	var canvas        = document.querySelector('canvas');
+	var context       = canvas.getContext('2d');
+	var fps           = 0;
+	var x             = 5.0;
+	var y             = 5.0;
+	var z             = 0.0;
+	var a             = 0.0;
+	var planeX        = 0.0;
+	var planeY        = 0.66;
+	var columns       = Math.round(canvas.width / 1);
+	var fadeDistance  = 4.0;
+	var s             = 2;
+	var zs            = 50;
+	var ts            = 2;
+	var lastFrameTime = 0;
+	var movingUp      = false;
+	var movingDown    = false;
+	var lookingLeft   = false;
+	var lookingRight  = false;
+	var texture       = new Image;
+	texture.src       = 'texture.png';
 	textures.push(texture);
 	render();
 </script>
