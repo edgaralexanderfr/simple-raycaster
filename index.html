@@ -3,7 +3,10 @@
 	/**
 	 * @return object
 	 */
-	function dda (sx, sy, dx, dy) {
+	function dda (sx, sy, dx, dy, testX, testY) {
+		var testX      = (testX) ? Math.floor(testX) : -1 ;
+		var testY      = (testY) ? Math.floor(testY) : -1 ;
+		var test       = false;
 		var mapX       = Math.floor(sx);
 		var mapY       = Math.floor(sy);
 		var deltaDistX = Math.sqrt(1 + (dy * dy) / (dx * dx));
@@ -40,15 +43,26 @@
 			if (map[ mapY ] != undefined && map[ mapY ][ mapX ] != undefined && map[ mapY ][ mapX ] > 0) {
 				break;
 			}
+
+			if (mapX == testX && mapY == testY) {
+				test = true;
+
+				break;
+			}
 		}
 			
-		distance = (side == 0) ? (mapX - sx + (1 - stepX) / 2) / dx : (mapY - sy + (1 - stepY) / 2) / dy ;
+		var distance = (side == 0) ? (mapX - sx + (1 - stepX) / 2) / dx : (mapY - sy + (1 - stepY) / 2) / dy ;
+		var hitX = sx + (distance * dx);
+		var hitY = sy + (distance * dy);
 
 		return {
 			mapX     : mapX, 
 			mapY     : mapY, 
 			side     : side, 
-			distance : distance
+			distance : distance, 
+			test     : test, 
+			hitX     : hitX, 
+			hitY     : hitY
 		}
 	}
 
