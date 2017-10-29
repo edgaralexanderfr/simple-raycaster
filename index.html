@@ -1,5 +1,57 @@
 <canvas width="800" height="480"></canvas>
 <script type="text/javascript">
+	/**
+	 * @return object
+	 */
+	function dda (sx, sy, dx, dy) {
+		var mapX       = Math.floor(sx);
+		var mapY       = Math.floor(sy);
+		var deltaDistX = Math.sqrt(1 + (dy * dy) / (dx * dx));
+		var deltaDistY = Math.sqrt(1 + (dx * dx) / (dy * dy));
+		var stepX, stepY, sideDistX, sideDistY, side;
+
+		if (dx < 0.0) {
+			stepX     = -1;
+			sideDistX = (sx - mapX) * deltaDistX;
+		} else {
+			stepX     = 1;
+			sideDistX = (mapX + 1.0 - sx) * deltaDistX;
+		}
+
+		if (dy < 0.0) {
+			stepY     = -1;
+			sideDistY = (sy - mapY) * deltaDistY;
+		} else {
+			stepY     = 1;
+			sideDistY = (mapY + 1.0 - sy) * deltaDistY;
+		}
+
+		while (true) {
+			if (sideDistX < sideDistY) {
+				sideDistX += deltaDistX;
+				mapX      += stepX;
+				side       = 0;
+			} else {
+				sideDistY += deltaDistY;
+				mapY      += stepY;
+				side       = 1;
+			}
+
+			if (map[ mapY ] != undefined && map[ mapY ][ mapX ] != undefined && map[ mapY ][ mapX ] > 0) {
+				break;
+			}
+		}
+			
+		distance = (side == 0) ? (mapX - sx + (1 - stepX) / 2) / dx : (mapY - sy + (1 - stepY) / 2) / dy ;
+
+		return {
+			mapX     : mapX, 
+			mapY     : mapY, 
+			side     : side, 
+			distance : distance
+		}
+	}
+
 	function render () {
 		// Calculate deltaTime
 		var currentFrameTime = Date.now();
@@ -35,53 +87,20 @@
 
 		// We begin raytracing
 		var cs              = Math.round(canvas.width / Math.max(columns, 1));
-		var c, cameraX, dx, dy, mapX, mapY, deltaDistX, deltaDistY, stepX, stepY, sideDistX, sideDistY, side, distance, height, tex, wallX, texX;
+		var c, cameraX, dx, dy, mapX, mapY, side, distance, height, tex, wallX, texX;
 		context.globalAlpha = 1.0;
 		context.fillStyle   = 'black';
 		context.fillRect(0, 0, canvas.width, canvas.height);
 
 		for (c = 0; c < canvas.width; c += cs) {
-			cameraX    = 2 * c / canvas.width - 1;
-			dx         = Math.cos(a) + planeX * cameraX;
-			dy         = Math.sin(a) + planeY * cameraX;
-			mapX       = Math.floor(x);
-			mapY       = Math.floor(y);
-			deltaDistX = Math.sqrt(1 + (dy * dy) / (dx * dx));
-			deltaDistY = Math.sqrt(1 + (dx * dx) / (dy * dy));
-
-			if (dx < 0.0) {
-				stepX     = -1;
-				sideDistX = (x - mapX) * deltaDistX;
-			} else {
-				stepX     = 1;
-				sideDistX = (mapX + 1.0 - x) * deltaDistX;
-			}
-
-			if (dy < 0.0) {
-				stepY     = -1;
-				sideDistY = (y - mapY) * deltaDistY;
-			} else {
-				stepY     = 1;
-				sideDistY = (mapY + 1.0 - y) * deltaDistY;
-			}
-
-			while (true) {
-				if (sideDistX < sideDistY) {
-					sideDistX += deltaDistX;
-					mapX      += stepX;
-					side       = 0;
-				} else {
-					sideDistY += deltaDistY;
-					mapY      += stepY;
-					side       = 1;
-				}
-
-				if (map[ mapY ] != undefined && map[ mapY ][ mapX ] != undefined && map[ mapY ][ mapX ] > 0) {
-					break;
-				}
-			}
-			
-			distance = (side == 0) ? (mapX - x + (1 - stepX) / 2) / dx : (mapY - y + (1 - stepY) / 2) / dy ;
+			cameraX  = 2 * c / canvas.width - 1;
+			dx       = Math.cos(a) + planeX * cameraX;
+			dy       = Math.sin(a) + planeY * cameraX;
+			cast     = dda(x, y, dx, dy);
+			mapX     = cast.mapX;
+			mapY     = cast.mapY;
+			side     = cast.side;
+			distance = cast.distance;
 			height   = Math.floor(wallsHeight * canvas.height / distance);
 			tex      = textures[ map[ mapY ][ mapX ] - 1 ];
 			wallX    = (side == 0) ? y + distance * dy : x + distance * dx ;
