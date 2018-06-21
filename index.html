@@ -36,9 +36,9 @@
 		// We begin raytracing
 		var cs              = Math.round(canvas.width / Math.max(columns, 1));
 		var c, cameraX, dx, dy, mapX, mapY, deltaDistX, deltaDistY, stepX, stepY, sideDistX, sideDistY, side, distance, height, tex, wallX, texX;
-		context.globalAlpha = 1.0;
-		context.fillStyle   = 'black';
-		context.fillRect(0, 0, canvas.width, canvas.height);
+		//context.globalAlpha = 1.0;
+		//context.fillStyle   = 'black';
+		//context.fillRect(0, 0, canvas.width, canvas.height);
 
 		for (c = 0; c < canvas.width; c += cs) {
 			cameraX    = 2 * c / canvas.width - 1;
@@ -93,11 +93,76 @@
 			}
 
 			if (fadeDistance > 0.0) {
-				context.globalAlpha = 1.0 - (Math.min(distance, fadeDistance) / fadeDistance);
+				//context.globalAlpha = 1.0 - (Math.min(distance, fadeDistance) / fadeDistance);
 			}
 
-			context.drawImage(tex, Math.floor(texX), 0, cs, tex.height, c, Math.floor(z + (canvas.height - height) / 2), cs, height);
+			//context.drawImage(tex, Math.floor(texX), 0, cs, tex.height, c, Math.floor(z + (canvas.height - height) / 2), cs, height);
+			var drawStart = Math.floor(z + (canvas.height - height) / 2);
+			var drawEnd = drawStart + height;
+			var vy;
+			var index;
+
+			for (vy = drawStart; vy < drawEnd; vy++) {
+				index = (vy * canvasWidth + c) * 4;
+				buffer[ index ]     = 255;
+				buffer[ index + 1 ] = 0;
+				buffer[ index + 2 ] = 255;
+				buffer[ index + 3 ] = 255;
+			}
+
+			var floorXWall, floorYWall;
+
+			if (side == 0 && dx > 0) {
+				floorXWall = mapX;
+				floorYWall = mapY + wallX;
+			} else 
+			if (side == 0 && dx < 0) {
+				floorXWall = mapX + 1.0;
+				floorYWall = mapY + wallX;
+			} else 
+			if (side == 1 && dy > 0) {
+				floorXWall = mapX + wallX;
+				floorYWall = mapY;
+			} else {
+				floorXWall = mapX + wallX;
+				floorYWall = mapY + 1.0;
+			}
+
+			var h = canvas.height;
+			var distWall, distPlayer, currentDist;
+
+			distWall = distance;
+			distPlayer = 0.0;
+
+			for (vy = drawEnd + 1; vy < h; vy++) {
+				currentDist = h / (2.0 * vy - h);
+
+				var weight = (currentDist - distPlayer) / (distWall - distPlayer);
+
+				var currentFloorX = weight * floorXWall + (1.0 - weight) * x;
+				var currentFloorY = weight * floorYWall + (1.0 - weight) * y;
+
+				var floorTexX, floorTexY;
+				floorTexX = Math.floor(currentFloorX * texWidth) % texWidth;
+				floorTexY = Math.floor(currentFloorY * texHeight) % texHeight;
+
+				// floor
+				index = (vy * canvasWidth + c) * 4;
+				buffer[ index ]     = 0;
+				buffer[ index + 1 ] = 255;
+				buffer[ index + 2 ] = 0;
+				buffer[ index + 3 ] = 255;
+
+				// ceiling
+				index = ((h - vy) * canvasWidth + c) * 4;
+				buffer[ index ]     = 0;
+				buffer[ index + 1 ] = 0;
+				buffer[ index + 2 ] = 255;
+				buffer[ index + 3 ] = 255;
+			}
 		}
+
+		context.putImageData(data, 0, 0);
 
 		if (fps > 0) {
 			setTimeout(render, 1000 / fps);
@@ -161,6 +226,8 @@
 		[1,1,1,1,1,1,1,1,1,1], 
 	];
 	var canvas        = document.querySelector('canvas');
+	var canvasWidth   = canvas.width;
+	var canvasHeight  = canvas.height;
 	var context       = canvas.getContext('2d');
 	var fps           = 0;
 	var x             = 5.0;
@@ -180,7 +247,16 @@
 	var lookingLeft   = false;
 	var lookingRight  = false;
 	var texture       = new Image;
+	var data          = context.getImageData(0, 0, canvas.width, canvas.height);
+	var buffer        = data.data;
+	var texWidth, texHeight;
+	
+	texture.onload = function (e) {
+		texWidth = texture.width;
+		texHeight = texture.height;
+		render();
+	}
+
 	texture.src       = 'texture.png';
 	textures.push(texture);
-	render();
 </script>
