@@ -81,8 +81,9 @@
 				}
 			}
 			
+			var h = wallsHeight * canvas.height;
 			distance = (side == 0) ? (mapX - x + (1 - stepX) / 2) / dx : (mapY - y + (1 - stepY) / 2) / dy ;
-			height   = Math.floor(wallsHeight * canvas.height / distance);
+			height   = Math.floor(h / distance);
 			tex      = textures[ map[ mapY ][ mapX ] - 1 ];
 			wallX    = (side == 0) ? y + distance * dy : x + distance * dx ;
 			wallX   -= Math.floor(wallX);
@@ -100,14 +101,18 @@
 			var drawStart = Math.floor(z + (canvas.height - height) / 2);
 			var drawEnd = drawStart + height;
 			var vy;
-			var index;
+			var texIndex, index;
 
 			for (vy = drawStart; vy < drawEnd; vy++) {
+				var texY = Math.floor(((vy - drawStart) * texHeight) / height);
+
+				texIndex = (texWidth * texY + texX) * 4;
+				
 				index = (vy * canvasWidth + c) * 4;
-				buffer[ index ]     = 255;
-				buffer[ index + 1 ] = 0;
-				buffer[ index + 2 ] = 255;
-				buffer[ index + 3 ] = 255;
+				buffer[ index ]     = texBuffer[ texIndex ];
+				buffer[ index + 1 ] = texBuffer[ texIndex + 1 ];
+				buffer[ index + 2 ] = texBuffer[ texIndex + 2 ];
+				buffer[ index + 3 ] = texBuffer[ texIndex + 3 ];
 			}
 
 			var floorXWall, floorYWall;
@@ -128,7 +133,7 @@
 				floorYWall = mapY + 1.0;
 			}
 
-			var h = canvas.height;
+			h = canvas.height;
 			var distWall, distPlayer, currentDist;
 
 			distWall = distance;
@@ -145,6 +150,8 @@
 				var floorTexX, floorTexY;
 				floorTexX = Math.floor(currentFloorX * texWidth) % texWidth;
 				floorTexY = Math.floor(currentFloorY * texHeight) % texHeight;
+
+				texIndex = (floorTexY * texWidth + floorTexX) * 4;
 
 				// floor
 				index = (vy * canvasWidth + c) * 4;
@@ -249,11 +256,18 @@
 	var texture       = new Image;
 	var data          = context.getImageData(0, 0, canvas.width, canvas.height);
 	var buffer        = data.data;
-	var texWidth, texHeight;
+	var texWidth, texHeight, texBuffer;
 	
 	texture.onload = function (e) {
 		texWidth = texture.width;
 		texHeight = texture.height;
+		var texCanvas = document.createElement('canvas');
+		texCanvas.width = texture.width;
+		texCanvas.height = texture.height;
+		var texContext = texCanvas.getContext('2d');
+		texContext.drawImage(texture, 0, 0);
+		var texData = texContext.getImageData(0, 0, texCanvas.width, texCanvas.height);
+		texBuffer = texData.data;
 		render();
 	}
 
