@@ -81,7 +81,7 @@
 				}
 			}
 			
-			var h = wallsHeight * canvas.height;
+			var h = canvas.height;
 			distance = (side == 0) ? (mapX - x + (1 - stepX) / 2) / dx : (mapY - y + (1 - stepY) / 2) / dy ;
 			height   = Math.floor(h / distance);
 			tex      = textures[ map[ mapY ][ mapX ] - 1 ];
@@ -133,7 +133,6 @@
 				floorYWall = mapY + 1.0;
 			}
 
-			h = canvas.height;
 			var distWall, distPlayer, currentDist;
 
 			distWall = distance;
@@ -155,17 +154,17 @@
 
 				// floor
 				index = (vy * canvasWidth + c) * 4;
-				buffer[ index ]     = 0;
-				buffer[ index + 1 ] = 255;
-				buffer[ index + 2 ] = 0;
-				buffer[ index + 3 ] = 255;
+				buffer[ index ]     = texBuffer[ texIndex ];
+				buffer[ index + 1 ] = texBuffer[ texIndex + 1 ];
+				buffer[ index + 2 ] = texBuffer[ texIndex + 2 ];
+				buffer[ index + 3 ] = texBuffer[ texIndex + 3 ];
 
 				// ceiling
 				index = ((h - vy) * canvasWidth + c) * 4;
-				buffer[ index ]     = 0;
-				buffer[ index + 1 ] = 0;
-				buffer[ index + 2 ] = 255;
-				buffer[ index + 3 ] = 255;
+				buffer[ index ]     = texBuffer[ texIndex ];
+				buffer[ index + 1 ] = texBuffer[ texIndex + 1 ];
+				buffer[ index + 2 ] = texBuffer[ texIndex + 2 ];
+				buffer[ index + 3 ] = texBuffer[ texIndex + 3 ];
 			}
 		}
 
@@ -219,7 +218,7 @@
 	}
 
 	var textures    = [];
-	var wallsHeight = 1.5;
+	var wallsHeight = 1.5; // TODO: Consider this...
 	var map         = [
 		[1,1,1,1,1,1,1,1,1,1], 
 		[1,0,0,0,0,0,0,0,0,1], 
