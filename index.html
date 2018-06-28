@@ -146,6 +146,27 @@
 				var currentFloorX = weight * floorXWall + (1.0 - weight) * x;
 				var currentFloorY = weight * floorYWall + (1.0 - weight) * y;
 
+				var mapFloorX = Math.floor(currentFloorX);
+				var mapFloorY = Math.floor(currentFloorY);
+
+				if (floorMap[ mapFloorY ] != undefined && floorMap[ mapFloorY ][ mapFloorX ] != undefined && floorMap[ mapFloorY ][ mapFloorX ] < 1) {
+					// floor
+					index = (vy * canvasWidth + c) * 4;
+					buffer[ index ]     = 0;
+					buffer[ index + 1 ] = 0;
+					buffer[ index + 2 ] = 0;
+					buffer[ index + 3 ] = 255;
+
+					// ceiling
+					index = ((h - vy) * canvasWidth + c) * 4;
+					buffer[ index ]     = 0;
+					buffer[ index + 1 ] = 0;
+					buffer[ index + 2 ] = 0;
+					buffer[ index + 3 ] = 255;
+					
+					continue;
+				}
+
 				var floorTexX, floorTexY;
 				floorTexX = Math.floor(currentFloorX * texWidth) % texWidth;
 				floorTexY = Math.floor(currentFloorY * texHeight) % texHeight;
@@ -230,6 +251,18 @@
 		[1,0,1,1,0,0,1,1,0,1], 
 		[1,0,0,0,0,0,0,0,0,1], 
 		[1,1,1,1,1,1,1,1,1,1], 
+	];
+	var floorMap    = [
+		[0,0,0,0,0,0,0,0,0,0], 
+		[0,0,0,0,0,0,0,0,0,0], 
+		[0,0,0,0,1,1,0,0,0,0], 
+		[0,0,0,0,1,1,0,0,0,0], 
+		[0,0,1,1,1,1,1,1,0,0], 
+		[0,0,1,1,1,1,1,1,0,0], 
+		[0,0,0,0,1,1,0,0,0,0], 
+		[0,0,0,0,1,1,0,0,0,0], 
+		[0,0,0,0,0,0,0,0,0,0], 
+		[0,0,0,0,0,0,0,0,0,0], 
 	];
 	var canvas        = document.querySelector('canvas');
 	var canvasWidth   = canvas.width;
