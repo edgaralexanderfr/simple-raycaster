@@ -40,6 +40,19 @@
 		context.fillStyle   = 'black';
 		context.fillRect(0, 0, canvas.width, canvas.height);
 
+		// Cache light sources
+		var lights = [];
+
+		for (var i = 0; i < lightSources.length; i++) {
+			var light = lightSources[i];
+
+			lights[i] = {
+				x: typeof light.x == 'function' ? light.x() : light.x,
+				y: typeof light.y == 'function' ? light.y() : light.y,
+				range: typeof light.range == 'function' ? light.range() : light.range
+			};
+		}
+
 		for (c = 0; c < canvas.width; c += cs) {
 			cameraX    = 2 * c / canvas.width - 1;
 			dx         = Math.cos(a) + planeX * cameraX;
@@ -92,11 +105,27 @@
 				texX = tex.width - texX - 1;
 			}
 
-			if (fadeDistance > 0.0) {
-				context.globalAlpha = 1.0 - (Math.min(distance, fadeDistance) / fadeDistance);
+			var destY = Math.floor(z + (canvas.height - height) / 2);
+
+			context.drawImage(tex, Math.floor(texX), 0, cs, tex.height, c, destY, cs, height);
+
+			// Determine light intensity
+			var alpha = 0.0;
+
+			for (var i = 0; i < lights.length; i++) {
+				var lightSource = lights[i];
+				var lightDistance = Math.abs(lightSource.x - (mapX + 0.5)) + Math.abs(lightSource.y - (mapY + 0.5));
+				var intensity = Math.max(lightSource.range - lightDistance, 0.0) / lightSource.range;
+
+				if (intensity > alpha) {
+					alpha = intensity;
+				}
 			}
 
-			context.drawImage(tex, Math.floor(texX), 0, cs, tex.height, c, Math.floor(z + (canvas.height - height) / 2), cs, height);
+			context.globalAlpha = 1.0 - alpha;
+			context.fillStyle = 'black';
+			context.fillRect(c, destY, cs, height);
+			context.globalAlpha = 1.0;
 		}
 
 		if (fps > 0) {
@@ -142,7 +171,13 @@
 			} ; break;
 			case 'k' : {
 				z -= zs;
-			}
+			} ; break;
+			case 'f' : {
+				lampOn = !lampOn;
+			} ; break;
+			case 'l' : {
+				lightsOn = !lightsOn;
+			} ; break;
 		}
 	}
 
@@ -159,6 +194,61 @@
 		[1,0,1,1,0,0,1,1,0,1], 
 		[1,0,0,0,0,0,0,0,0,1], 
 		[1,1,1,1,1,1,1,1,1,1], 
+	];
+	var lightSources = [
+		{
+			x: function () { return x; },
+			y: function () { return y; },
+
+			range: function () {
+				return lampOn ? 6.0 : 0.0;
+			}
+		},
+		{
+			x: 1.5,
+			y: 1.5,
+
+			range: function () {
+				if (!lightsOn) return 0.0;
+				return 3.6 + (0.4 * Math.random());
+			}
+		},
+		{
+			x: 8.5,
+			y: 1.5,
+
+			range: function () {
+				if (!lightsOn) return 0.0;
+				return 3.6 + (0.4 * Math.random());
+			}
+		},
+		{
+			x: 1.5,
+			y: 8.5,
+
+			range: function () {
+				if (!lightsOn) return 0.0;
+				return 3.6 + (0.4 * Math.random());
+			}
+		},
+		{
+			x: 8.5,
+			y: 8.5,
+
+			range: function () {
+				if (!lightsOn) return 0.0;
+				return 3.6 + (0.4 * Math.random());
+			}
+		},
+		{
+			x: 5.0,
+			y: 5.0,
+
+			range: function () {
+				if (!lightsOn) return 0.0;
+				return 3.6 + (0.4 * Math.random());
+			}
+		}
 	];
 	var canvas        = document.querySelector('canvas');
 	var context       = canvas.getContext('2d');
@@ -179,6 +269,8 @@
 	var movingDown    = false;
 	var lookingLeft   = false;
 	var lookingRight  = false;
+	var lampOn        = true;
+	var lightsOn      = true;
 	var texture       = new Image;
 	texture.src       = 'texture.png';
 	textures.push(texture);
