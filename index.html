@@ -89,6 +89,22 @@
 					side       = 1;
 				}
 
+				if (c == 0) {
+					a1 = Math.atan2(dy, dx);
+
+					if (a1 < 0.0) {
+						a1 += Math.PI * 2;
+					}
+				}
+
+				if (c == (canvas.width - 1)) {
+					a2 = Math.atan2(dy, dx);
+
+					if (a2 < 0.0) {
+						a2 += Math.PI * 2;
+					}
+				}
+
 				if (map[ mapY ] != undefined && map[ mapY ][ mapX ] != undefined && map[ mapY ][ mapX ] > 0) {
 					break;
 				}
@@ -126,6 +142,33 @@
 			context.fillStyle = 'black';
 			context.fillRect(c, destY, cs, height);
 			context.globalAlpha = 1.0;
+		}
+
+		for (var spriteIndex = 0; spriteIndex < sprites.length; spriteIndex++) {
+			var sprite = sprites[spriteIndex];
+			var spriteAngle = Math.atan2(sprite.y - y, sprite.x - x);
+
+			if (spriteAngle < 0.0) {
+				spriteAngle += Math.PI * 2;
+			}
+
+			if ((a2 > a1 && spriteAngle >= a1 && spriteAngle <= a2) || (a1 > a2 && (spriteAngle >= a1 || spriteAngle <= a2))) {
+				var x2d;
+
+				if (a2 > a1 && spriteAngle >= a1 && spriteAngle <= a2) {
+					x2d = ((spriteAngle - a1) * canvas.width) / (a2 - a1);
+				}
+
+				if (a1 > a2 && (spriteAngle >= a1 || spriteAngle <= a2)) {
+					x2d = ((spriteAngle >= a1 ? spriteAngle - a1 : (Math.PI * 2) - a1 + spriteAngle) * canvas.width) / ((Math.PI * 2) - a1 + a2);
+				}
+
+				var spriteDistance = Math.sqrt(Math.pow(sprite.x - x, 2)+ Math.pow(sprite.y - y, 2));
+				var size = Math.max(canvas.height - ((spriteDistance * canvas.height) / 4), 0);
+
+				context.globalAlpha = 1.0;
+				context.drawImage(doomguy, x2d - (size / 2), (canvas.height - size) / 2, size, size);
+			}
 		}
 
 		if (fps > 0) {
@@ -250,6 +293,12 @@
 			}
 		}
 	];
+	var sprites = [
+		{
+			x: 5.0,
+			y: 5.0,
+		},
+	];
 	var canvas        = document.querySelector('canvas');
 	var context       = canvas.getContext('2d');
 	var fps           = 0;
@@ -259,6 +308,8 @@
 	var a             = 0.0;
 	var planeX        = 0.0;
 	var planeY        = 0.66;
+	var a1            = 0.0;
+	var a2            = 0.0;
 	var columns       = Math.round(canvas.width / 1);
 	var fadeDistance  = 4.0;
 	var s             = 2;
@@ -274,5 +325,7 @@
 	var texture       = new Image;
 	texture.src       = 'texture.png';
 	textures.push(texture);
+	var doomguy       = new Image;
+	doomguy.src       = 'doomguy.png';
 	render();
 </script>
